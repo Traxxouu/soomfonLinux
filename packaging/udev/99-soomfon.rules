@@ -1,0 +1,15 @@
+# udev rules for Soomfon (Mirabox / Ajazz OEM) stream deck devices.
+#
+# These devices share the OEM USB vendor id 0x0300. Granting "uaccess" lets the
+# logged-in user open the HID interfaces without running as root.
+#
+# Install:
+#   sudo cp packaging/udev/99-soomfon.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+# Then unplug and replug the device.
+#
+# NOTE: the exact vendor/product ids are confirmed per model in the
+# `feat/device-detection` work. Adjust idVendor/idProduct here as models are added.
+
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0300", TAG+="uaccess", MODE="0660"
+KERNEL=="hidraw*", ATTRS{idVendor}=="0300", TAG+="uaccess", MODE="0660"
