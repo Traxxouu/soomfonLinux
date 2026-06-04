@@ -93,8 +93,10 @@ pub async fn list_devices() -> Result<Vec<DeviceInfo>, DeviceError> {
 
 /// A connected deck, ready to read input from.
 ///
-/// Connecting does not write to the device (it leaves the screens and
-/// brightness untouched); rendering lands in a later branch.
+/// Connecting takes the device out of its standalone mode and into host mode:
+/// it sets a default brightness and clears the key screens. This handshake is
+/// what makes the deck stream key/encoder events to us instead of handling
+/// presses on its own.
 pub struct Deck {
     device: Device,
     kind: Kind,
@@ -124,10 +126,25 @@ impl Deck {
             .await
             .map_err(transport)?;
 
-            return Ok(Some(Deck { device, kind }));
+            let deck = Deck { device, kind };
+            deck.initialize().await?;
+
+            return Ok(Some(deck));
         }
 
         Ok(None)
+    }
+
+    /// Run the host handshake: without it the deck stays in standalone mode and
+    /// never reports input. Blanks the key screens as a side effect.
+    async fn initialize(&self) -> Result<(), DeviceError> {
+        self.device.set_brightness(50).await.map_err(transport)?;
+        self.device
+            .clear_all_button_images()
+            .await
+            .map_err(transport)?;
+        self.device.flush().await.map_err(transport)?;
+        Ok(())
     }
 
     /// The resolved model of this deck.
@@ -163,10 +180,18 @@ impl EventReader {
     ///
     /// A single physical action (a key press, an encoder click) maps to one or
     /// more [`InputEvent`]s. The returned vector may be empty if the device sent
-    /// a report that produced no state change.
+    /// a report that produced no state change, or one we don't recognize.
+    ///
+    /// The deck interleaves housekeeping reports (acks, heartbeats) with input.
+    /// `mirajazz` flags the ones it can't decode as [`MirajazzError::BadData`];
+    /// those are skipped rather than treated as fatal, so a single stray report
+    /// never tears down the read loop.
     pub async fn next_events(&self) -> Result<Vec<InputEvent>, DeviceError> {
-        let updates = self.inner.read(None).await.map_err(transport)?;
-        Ok(updates.into_iter().map(InputEvent::from_update).collect())
+        match self.inner.read(None).await {
+            Ok(updates) => Ok(updates.into_iter().map(InputEvent::from_update).collect()),
+            Err(mirajazz::error::MirajazzError::BadData) => Ok(Vec::new()),
+            Err(err) => Err(transport(err)),
+        }
     }
 }
 

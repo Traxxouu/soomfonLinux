@@ -3,8 +3,12 @@
 # These devices ship under several OEM vendor ids. Granting "uaccess" lets the
 # logged-in user open the HID interfaces without running as root.
 #
+# The 70- prefix matters: systemd's 73-seat-late.rules runs the "uaccess"
+# builtin, so the tag must be set by an earlier-numbered file (< 73) or the ACL
+# is never applied.
+#
 # Install:
-#   sudo cp packaging/udev/99-soomfon.rules /etc/udev/rules.d/
+#   sudo cp packaging/udev/70-soomfon.rules /etc/udev/rules.d/
 #   sudo udevadm control --reload-rules && sudo udevadm trigger
 # Then unplug and replug the device.
 #

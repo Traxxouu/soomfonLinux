@@ -1,7 +1,7 @@
 //! Detect a connected deck and print every key / encoder event.
 //!
 //! This is the manual hardware check for the device layer. Plug the deck in,
-//! install the udev rule (`packaging/udev/99-soomfon.rules`), then run:
+//! install the udev rule (`packaging/udev/70-soomfon.rules`), then run:
 //!
 //! ```sh
 //! cargo run -p soomfon-device --example monitor
