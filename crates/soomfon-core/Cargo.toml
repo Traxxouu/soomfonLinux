@@ -1,0 +1,13 @@
+[package]
+name = "soomfon-core"
+description = "Core logic for soomfonLinux: device discovery, profiles and action dispatch"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+soomfon-device.workspace = true

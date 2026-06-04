@@ -1,0 +1,17 @@
+# Rust / Cargo
+/target
+**/target
+
+# Node / frontend
+node_modules
+ui/dist
+ui/.vite
+
+# Tauri generated sources
+src-tauri/gen
+
+# OS / editor noise
+.DS_Store
+*.swp
+.idea/
+.vscode/

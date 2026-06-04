@@ -1,0 +1,25 @@
+[package]
+name = "soomfon"
+description = "soomfonLinux — open-source desktop app to drive Soomfon stream decks on Linux"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+default-run = "soomfon"
+
+# The library is what `tauri::generate_context!` and mobile targets build
+# against; the binary is just a thin entrypoint over it.
+[lib]
+name = "soomfon_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde.workspace = true
+serde_json.workspace = true
+soomfon-core.workspace = true
