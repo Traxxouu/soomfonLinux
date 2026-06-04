@@ -2,9 +2,13 @@
 //!
 //! This crate sits between the hardware layer ([`soomfon_device`]) and the
 //! desktop frontend. It owns the application state that the UI renders and the
-//! actions a key press can trigger. For now it only exposes a [`status`]
-//! snapshot used to prove the layering end to end; profiles, pages and actions
-//! land in later branches (`feat/profiles-config`, `feat/action-*`).
+//! actions a key press can trigger. Alongside the live [`status`] snapshot it
+//! owns the persisted user [`config`] — profiles, pages and per-key buttons.
+//! Action dispatch lands in a later branch (`feat/action-*`).
+
+pub mod config;
+
+pub use config::{Button, Config, ConfigError, ConfigStore, Page, Profile};
 
 use serde::{Deserialize, Serialize};
 
