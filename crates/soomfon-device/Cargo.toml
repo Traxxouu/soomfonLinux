@@ -10,3 +10,7 @@ authors.workspace = true
 
 [dependencies]
 thiserror.workspace = true
+mirajazz = "0.6.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
