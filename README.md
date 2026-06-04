@@ -80,8 +80,8 @@ Then unplug and replug the device.
 ## Roadmap
 
 - [x] Project scaffolding (workspace, Tauri + Svelte, CI, packaging skeleton)
-- [ ] Device detection via `mirajazz` (read key/encoder input)
-- [ ] Render images and text to keys, set brightness
+- [x] Device detection via `mirajazz` (read key/encoder input)
+- [x] Render images and text to keys, set brightness
 - [ ] Profiles, pages and button configuration with persistence
 - [ ] Visual button-grid editor
 - [ ] Actions: run command / hotkey / open app

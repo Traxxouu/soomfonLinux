@@ -10,12 +10,14 @@
 
 mod input;
 mod kind;
+pub mod render;
 
 use std::sync::Arc;
 
 use mirajazz::{device::Device, state::DeviceStateReader};
 use thiserror::Error;
 
+pub use image::{DynamicImage, RgbImage};
 pub use input::InputEvent;
 pub use kind::Kind;
 
@@ -28,6 +30,14 @@ pub enum DeviceError {
     /// The underlying USB/HID transport failed.
     #[error("device transport error: {0}")]
     Transport(String),
+    /// A drawing call targeted a key that has no LCD screen.
+    #[error("key {key} has no screen (only the first {screens} keys do)")]
+    NoScreen {
+        /// The out-of-range key index.
+        key: u8,
+        /// How many keys actually have a screen.
+        screens: u8,
+    },
 }
 
 fn transport(err: mirajazz::error::MirajazzError) -> DeviceError {
@@ -166,6 +176,78 @@ impl Deck {
     pub fn reader(&self) -> EventReader {
         EventReader {
             inner: self.device.get_reader(input::process_input),
+        }
+    }
+
+    /// Number of keys that can show an image (the rest are plain buttons).
+    pub fn lcd_key_count(&self) -> u8 {
+        self.kind.lcd_key_count()
+    }
+
+    /// Set the panel brightness, `0..=100` percent.
+    pub async fn set_brightness(&self, percent: u8) -> Result<(), DeviceError> {
+        self.device.set_brightness(percent).await.map_err(transport)
+    }
+
+    /// Queue an image for a key. The bitmap is resized and re-encoded to the
+    /// device's native format automatically.
+    ///
+    /// Drawing is buffered: nothing changes on the panel until [`Deck::flush`]
+    /// is called, so several keys can be updated in one batch.
+    pub async fn set_key_image(&self, key: u8, image: DynamicImage) -> Result<(), DeviceError> {
+        self.check_screen(key)?;
+        self.device
+            .set_button_image(key, self.kind.image_format(), image)
+            .await
+            .map_err(transport)
+    }
+
+    /// Queue a solid-colour fill for a key. Buffered; see [`Deck::set_key_image`].
+    pub async fn set_key_color(&self, key: u8, rgb: [u8; 3]) -> Result<(), DeviceError> {
+        let image = render::solid(self.kind.key_image_size(), rgb);
+        self.set_key_image(key, DynamicImage::ImageRgb8(image))
+            .await
+    }
+
+    /// Queue a short text label for a key, `fg` on `bg`. Newlines split lines.
+    /// Buffered; see [`Deck::set_key_image`].
+    pub async fn set_key_text(
+        &self,
+        key: u8,
+        text: &str,
+        fg: [u8; 3],
+        bg: [u8; 3],
+    ) -> Result<(), DeviceError> {
+        let image = render::text(self.kind.key_image_size(), text, fg, bg);
+        self.set_key_image(key, DynamicImage::ImageRgb8(image))
+            .await
+    }
+
+    /// Queue a key to be blanked. Buffered; see [`Deck::set_key_image`].
+    pub async fn clear_key(&self, key: u8) -> Result<(), DeviceError> {
+        self.check_screen(key)?;
+        self.device.clear_button_image(key).await.map_err(transport)
+    }
+
+    /// Queue every key to be blanked. Buffered; see [`Deck::set_key_image`].
+    pub async fn clear_all_keys(&self) -> Result<(), DeviceError> {
+        self.device
+            .clear_all_button_images()
+            .await
+            .map_err(transport)
+    }
+
+    /// Push all buffered drawing to the panel.
+    pub async fn flush(&self) -> Result<(), DeviceError> {
+        self.device.flush().await.map_err(transport)
+    }
+
+    fn check_screen(&self, key: u8) -> Result<(), DeviceError> {
+        let screens = self.kind.lcd_key_count();
+        if key < screens {
+            Ok(())
+        } else {
+            Err(DeviceError::NoScreen { key, screens })
         }
     }
 }
