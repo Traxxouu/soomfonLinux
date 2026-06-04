@@ -71,7 +71,7 @@ npm --prefix ui run tauri build
 To talk to the deck without root, install the udev rule:
 
 ```sh
-sudo cp packaging/udev/99-soomfon.rules /etc/udev/rules.d/
+sudo cp packaging/udev/70-soomfon.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 

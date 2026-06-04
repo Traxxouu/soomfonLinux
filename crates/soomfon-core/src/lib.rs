@@ -27,19 +27,23 @@ pub struct DeviceSummary {
 }
 
 /// Build a [`Status`] snapshot from the current hardware state.
-pub fn status() -> Status {
-    let devices = soomfon_device::list_devices()
-        .unwrap_or_default()
-        .into_iter()
-        .map(|d| DeviceSummary {
-            model: d.model,
-            keys: d.keys,
-        })
-        .collect();
+pub async fn status() -> Status {
+    let devices = soomfon_device::list_devices().await.unwrap_or_default();
+    Status::from_devices(devices)
+}
 
-    Status {
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        devices,
+impl Status {
+    fn from_devices(devices: Vec<soomfon_device::DeviceInfo>) -> Status {
+        Status {
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            devices: devices
+                .into_iter()
+                .map(|d| DeviceSummary {
+                    model: d.model,
+                    keys: d.keys,
+                })
+                .collect(),
+        }
     }
 }
 
@@ -48,9 +52,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn status_reports_version_and_no_devices_yet() {
-        let s = status();
+    fn status_reports_version_and_summarizes_devices() {
+        let s = Status::from_devices(vec![soomfon_device::DeviceInfo {
+            model: "Soomfon Stream Controller SE".into(),
+            vid: 0x1500,
+            pid: 0x3001,
+            keys: 9,
+            encoders: 3,
+            has_key_screens: true,
+            serial: None,
+        }]);
+
         assert!(!s.version.is_empty());
-        assert!(s.devices.is_empty());
+        assert_eq!(s.devices.len(), 1);
+        assert_eq!(s.devices[0].keys, 9);
     }
 }

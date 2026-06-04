@@ -6,8 +6,8 @@
 
 /// Return a snapshot of the current application state to the frontend.
 #[tauri::command]
-fn get_status() -> soomfon_core::Status {
-    soomfon_core::status()
+async fn get_status() -> soomfon_core::Status {
+    soomfon_core::status().await
 }
 
 /// Build and run the desktop application.
