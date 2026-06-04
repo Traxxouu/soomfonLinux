@@ -5,6 +5,7 @@
 //! community `opendeck-soomfon` plugin, re-expressed here as our own table.
 
 use mirajazz::device::DeviceQuery;
+use mirajazz::types::{ImageFormat, ImageMirroring, ImageMode, ImageRotation};
 
 /// HID usage page exposed by the vendor (control) interface of every model.
 const USAGE_PAGE: u16 = 65440; // 0xFFA0
@@ -25,8 +26,13 @@ const SOOMFON_SE_PID: u16 = 0x3001;
 
 /// Every model in this family is a 3x3 grid: six LCD keys plus three plain keys.
 const KEY_COUNT: u8 = 9;
+/// The first six keys (the top two rows) are LCD screens; the bottom row is
+/// plain push buttons with nothing to draw on.
+const LCD_KEY_COUNT: u8 = 6;
 /// ...with three rotary encoders / knobs.
 const ENCODER_COUNT: u8 = 3;
+/// Side length, in pixels, of each square LCD key.
+const KEY_IMAGE_DIM: u32 = 60;
 
 /// A specific, supported device model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -107,6 +113,35 @@ impl Kind {
         true
     }
 
+    /// Number of keys that are backed by an LCD screen. These are always the
+    /// first keys (row-major), so a key index is drawable iff it is less than
+    /// this count.
+    pub const fn lcd_key_count(self) -> u8 {
+        LCD_KEY_COUNT
+    }
+
+    /// Pixel dimensions `(width, height)` of a single LCD key.
+    pub const fn key_image_size(self) -> (u32, u32) {
+        (KEY_IMAGE_DIM, KEY_IMAGE_DIM)
+    }
+
+    /// The framing the firmware expects for a key image: a 60x60 JPEG. Some
+    /// models wire their panels rotated, so the bitmap is pre-rotated to land
+    /// upright on the physical screen.
+    pub fn image_format(self) -> ImageFormat {
+        let rotation = match self {
+            Self::Akp03Erev2 | Self::N3En | Self::SoomfonSe => ImageRotation::Rot90,
+            Self::Akp03 | Self::Akp03E | Self::Akp03R | Self::N3 => ImageRotation::Rot0,
+        };
+
+        ImageFormat {
+            mode: ImageMode::JPEG,
+            size: (KEY_IMAGE_DIM as usize, KEY_IMAGE_DIM as usize),
+            rotation,
+            mirror: ImageMirroring::None,
+        }
+    }
+
     /// Whether the device emits separate press *and* release reports rather than
     /// a single toggle. The input layer needs this to report key-up correctly.
     pub const fn supports_both_states(self) -> bool {
@@ -162,5 +197,27 @@ mod tests {
     #[test]
     fn one_query_per_model() {
         assert_eq!(queries().len(), ALL.len());
+    }
+
+    #[test]
+    fn six_of_the_nine_keys_have_screens() {
+        assert_eq!(Kind::SoomfonSe.lcd_key_count(), 6);
+        assert!(Kind::SoomfonSe.lcd_key_count() < Kind::SoomfonSe.key_count());
+    }
+
+    #[test]
+    fn se_panel_image_is_rotated_jpeg() {
+        let fmt = Kind::SoomfonSe.image_format();
+        assert!(matches!(fmt.mode, ImageMode::JPEG));
+        assert_eq!(fmt.size, (60, 60));
+        assert!(matches!(fmt.rotation, ImageRotation::Rot90));
+    }
+
+    #[test]
+    fn plain_jpeg_models_are_not_rotated() {
+        assert!(matches!(
+            Kind::Akp03.image_format().rotation,
+            ImageRotation::Rot0
+        ));
     }
 }
