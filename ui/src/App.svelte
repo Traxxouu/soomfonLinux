@@ -76,7 +76,10 @@
 
 <main>
   <header>
-    <h1>soomfonLinux</h1>
+    <div class="title-row">
+      <h1>soomfonLinux</h1>
+      {#if status}<span class="version">v{status.version}</span>{/if}
+    </div>
     <p class="tagline">Pilotez votre stream deck Soomfon sous Linux.</p>
   </header>
 
@@ -85,9 +88,13 @@
       <p class="error">Erreur backend : {loadError}</p>
     </section>
   {:else if config && page && profile}
-    <p class="device muted">
+    <p
+      class="status"
+      class:online={status !== null && status.devices.length > 0}
+    >
+      <span class="dot"></span>
       {#if status && status.devices.length > 0}
-        Appareil : {status.devices[0].model}
+        {status.devices[0].model}
       {:else}
         Aucun appareil détecté — l'édition reste possible.
       {/if}
@@ -142,16 +149,61 @@
 </main>
 
 <style>
-  .device {
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .version {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+  }
+
+  .status {
     margin-top: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+  }
+
+  .status .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--muted);
+    flex: none;
+  }
+
+  .status.online {
+    color: var(--fg);
+  }
+
+  .status.online .dot {
+    background: var(--ok);
+    box-shadow: 0 0 0 3px rgba(126, 224, 160, 0.18);
   }
 
   .editor-layout {
-    margin-top: 0.75rem;
+    margin-top: 1.25rem;
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 1.5rem;
+    gap: 1.25rem;
     align-items: start;
+  }
+
+  .editor-layout .card {
+    margin-top: 0;
   }
 
   .context {
@@ -169,14 +221,25 @@
   }
 
   .save {
-    padding: 0.55rem 1.1rem;
-    border-radius: 8px;
+    padding: 0.6rem 1.3rem;
+    border-radius: var(--radius-sm);
     border: none;
     background: var(--accent);
     color: white;
     font: inherit;
     font-weight: 600;
     cursor: pointer;
+    transition:
+      background 0.12s ease,
+      transform 0.08s ease;
+  }
+
+  .save:not(:disabled):hover {
+    background: var(--accent-strong);
+  }
+
+  .save:not(:disabled):active {
+    transform: translateY(1px);
   }
 
   .save:disabled {
@@ -185,7 +248,7 @@
   }
 
   .ok {
-    color: #7ee0a0;
+    color: var(--ok);
   }
 
   @media (max-width: 620px) {
