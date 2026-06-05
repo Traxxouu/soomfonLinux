@@ -15,6 +15,7 @@ thiserror.workspace = true
 directories.workspace = true
 tokio = { workspace = true, features = ["time"] }
 soomfon-device.workspace = true
+evdev.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -26,6 +26,14 @@
     ),
   );
 
+  // Same idea for the hotkey combo: the raw "ctrl+shift+m" text is kept locally
+  // so a trailing "+" survives while the next key is being typed.
+  let hotkeyText = $state(
+    untrack(() =>
+      button.action.type === "hotkey" ? button.action.keys.join("+") : "",
+    ),
+  );
+
   function setLabel(value: string) {
     onchange({ ...button, label: value.trim() === "" ? undefined : value });
   }
@@ -38,6 +46,9 @@
     if (type === "run_command") {
       argsText = "";
       setAction({ type: "run_command", program: "", args: [] });
+    } else if (type === "hotkey") {
+      hotkeyText = "";
+      setAction({ type: "hotkey", keys: [] });
     } else {
       setAction({ type: "none" });
     }
@@ -53,6 +64,16 @@
     if (button.action.type !== "run_command") return;
     const args = value.split(/\s+/).filter((s) => s.length > 0);
     setAction({ ...button.action, args });
+  }
+
+  function setHotkey(value: string) {
+    hotkeyText = value;
+    if (button.action.type !== "hotkey") return;
+    const keys = value
+      .split("+")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    setAction({ ...button.action, keys });
   }
 </script>
 
@@ -100,6 +121,7 @@
       >
         <option value="none">Aucune</option>
         <option value="run_command">Lancer une commande</option>
+        <option value="hotkey">Raccourci clavier</option>
       </select>
     </label>
 
@@ -122,6 +144,20 @@
           oninput={(e) => setArgs(e.currentTarget.value)}
         />
       </label>
+    {:else if button.action.type === "hotkey"}
+      <label class="field">
+        <span>Combinaison (touches séparées par «&nbsp;+&nbsp;»)</span>
+        <input
+          type="text"
+          placeholder="ex. ctrl+shift+m"
+          value={hotkeyText}
+          oninput={(e) => setHotkey(e.currentTarget.value)}
+        />
+      </label>
+      <p class="hint">
+        Modificateurs : ctrl, shift, alt, super. Plus lettres, chiffres,
+        f1–f12, enter, space, tab, esc, flèches…
+      </p>
     {/if}
   </div>
 
@@ -147,6 +183,13 @@
     flex-direction: column;
     gap: 0.35rem;
     font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
     color: var(--muted);
   }
 
