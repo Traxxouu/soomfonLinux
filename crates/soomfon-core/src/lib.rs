@@ -15,7 +15,7 @@ pub mod session;
 pub use action::{Action, ActionError};
 pub use config::{Button, Config, ConfigError, ConfigStore, Page, Profile};
 pub use keyboard::{Keyboard, KeyboardError};
-pub use session::run_device_session;
+pub use session::{run_device_session, RedrawSignal};
 
 use serde::{Deserialize, Serialize};
 
