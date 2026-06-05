@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { Button } from "./config";
+  import { untrack } from "svelte";
+  import type { Action, Button } from "./config";
   import { rgbToHex, hexToRgb } from "./config";
 
   let {
@@ -16,8 +17,42 @@
     onclear: () => void;
   } = $props();
 
+  // Local text for the arguments field, kept separate from the parsed `args`
+  // array so spaces survive while typing. The editor is re-keyed per key, so
+  // this initialises correctly for each selection.
+  let argsText = $state(
+    untrack(() =>
+      button.action.type === "run_command" ? button.action.args.join(" ") : "",
+    ),
+  );
+
   function setLabel(value: string) {
     onchange({ ...button, label: value.trim() === "" ? undefined : value });
+  }
+
+  function setAction(action: Action) {
+    onchange({ ...button, action });
+  }
+
+  function setActionType(type: Action["type"]) {
+    if (type === "run_command") {
+      argsText = "";
+      setAction({ type: "run_command", program: "", args: [] });
+    } else {
+      setAction({ type: "none" });
+    }
+  }
+
+  function setProgram(program: string) {
+    if (button.action.type !== "run_command") return;
+    setAction({ ...button.action, program });
+  }
+
+  function setArgs(value: string) {
+    argsText = value;
+    if (button.action.type !== "run_command") return;
+    const args = value.split(/\s+/).filter((s) => s.length > 0);
+    setAction({ ...button.action, args });
   }
 </script>
 
@@ -55,6 +90,41 @@
     </label>
   </div>
 
+  <div class="action">
+    <label class="field">
+      <span>Action</span>
+      <select
+        value={button.action.type}
+        onchange={(e) =>
+          setActionType(e.currentTarget.value as Action["type"])}
+      >
+        <option value="none">Aucune</option>
+        <option value="run_command">Lancer une commande</option>
+      </select>
+    </label>
+
+    {#if button.action.type === "run_command"}
+      <label class="field">
+        <span>Programme</span>
+        <input
+          type="text"
+          placeholder="ex. firefox"
+          value={button.action.program}
+          oninput={(e) => setProgram(e.currentTarget.value)}
+        />
+      </label>
+      <label class="field">
+        <span>Arguments (séparés par des espaces)</span>
+        <input
+          type="text"
+          placeholder="ex. --new-window https://twitch.tv"
+          value={argsText}
+          oninput={(e) => setArgs(e.currentTarget.value)}
+        />
+      </label>
+    {/if}
+  </div>
+
   <button type="button" class="clear" onclick={onclear} disabled={!exists}>
     Effacer la touche
   </button>
@@ -80,7 +150,8 @@
     color: var(--muted);
   }
 
-  input[type="text"] {
+  input[type="text"],
+  select {
     padding: 0.5rem 0.6rem;
     border-radius: 8px;
     border: 1px solid #2a2a3a;
@@ -89,10 +160,23 @@
     font: inherit;
   }
 
-  input[type="text"]:focus {
+  select {
+    cursor: pointer;
+  }
+
+  input[type="text"]:focus,
+  select:focus {
     outline: 2px solid var(--accent);
     outline-offset: 0;
     border-color: transparent;
+  }
+
+  .action {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2a2a3a;
   }
 
   .colors {

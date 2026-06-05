@@ -7,6 +7,14 @@
 
 export type Rgb = [number, number, number];
 
+/**
+ * What a key does when pressed. Tagged by `type` to match serde's internally
+ * tagged enum (`#[serde(tag = "type")]`).
+ */
+export type Action =
+  | { type: "none" }
+  | { type: "run_command"; program: string; args: string[] };
+
 export interface Button {
   /** Text drawn on the key. Omitted (undefined) leaves a solid fill. */
   label?: string;
@@ -14,6 +22,8 @@ export interface Button {
   color: Rgb;
   /** Label colour. */
   text_color: Rgb;
+  /** Behaviour on press. */
+  action: Action;
 }
 
 export interface Page {
@@ -44,7 +54,11 @@ export const GRID_COLS = 3;
 
 /** Sensible defaults for a freshly-configured key, matching the Rust side. */
 export function defaultButton(): Button {
-  return { color: [0x14, 0x14, 0x14], text_color: [0xff, 0xff, 0xff] };
+  return {
+    color: [0x14, 0x14, 0x14],
+    text_color: [0xff, 0xff, 0xff],
+    action: { type: "none" },
+  };
 }
 
 /** `[r, g, b]` -> `"#rrggbb"` for `<input type="color">`. */

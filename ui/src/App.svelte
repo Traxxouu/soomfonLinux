@@ -109,13 +109,15 @@
         {#if selected === null}
           <p class="muted">Sélectionnez une touche pour la configurer.</p>
         {:else}
-          <ButtonEditor
-            keyIndex={selected}
-            button={storedButton ?? defaultButton()}
-            exists={storedButton !== null}
-            onchange={updateButton}
-            onclear={clearKey}
-          />
+          {#key selected}
+            <ButtonEditor
+              keyIndex={selected}
+              button={storedButton ?? defaultButton()}
+              exists={storedButton !== null}
+              onchange={updateButton}
+              onclear={clearKey}
+            />
+          {/key}
         {/if}
       </div>
     </section>

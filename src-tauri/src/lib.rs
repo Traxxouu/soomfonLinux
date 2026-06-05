@@ -26,6 +26,12 @@ fn save_config(config: soomfon_core::Config) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|_app| {
+            // Drive a connected deck in the background: draw the active page and
+            // run each key's action on press. The session reconnects on its own.
+            tauri::async_runtime::spawn(soomfon_core::run_device_session());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_status,
             get_config,

@@ -84,7 +84,8 @@ Then unplug and replug the device.
 - [x] Render images and text to keys, set brightness
 - [x] Profiles, pages and button model with JSON persistence
 - [x] Visual button-grid editor
-- [ ] Actions: run command / hotkey / open app
+- [x] Key actions: run a command (also launches apps and scripts)
+- [ ] Key actions: keyboard hotkey
 - [ ] OBS integration (scene & slide control)
 - [ ] Spotify integration (MPRIS / Web API)
 - [ ] Packaging: AppImage / Flatpak / AUR
