@@ -83,7 +83,7 @@ Then unplug and replug the device.
 - [x] Device detection via `mirajazz` (read key/encoder input)
 - [x] Render images and text to keys, set brightness
 - [x] Profiles, pages and button model with JSON persistence
-- [ ] Visual button-grid editor
+- [x] Visual button-grid editor
 - [ ] Actions: run command / hotkey / open app
 - [ ] OBS integration (scene & slide control)
 - [ ] Spotify integration (MPRIS / Web API)
