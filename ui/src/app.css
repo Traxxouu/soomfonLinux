@@ -1,10 +1,19 @@
 :root {
   color-scheme: dark;
-  --bg: #14141b;
+  --bg: #131319;
   --fg: #e9e9f0;
-  --muted: #9a9ab0;
-  --accent: #5b5bd6;
-  --card: #1e1e29;
+  --muted: #9595ac;
+  --accent: #6d6df0;
+  --accent-strong: #8181f5;
+  --accent-soft: rgba(109, 109, 240, 0.16);
+  --card: #1c1c27;
+  --surface: #16161f;
+  --border: #2b2b3b;
+  --ok: #7ee0a0;
+  --danger: #ff7a7a;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.22);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -15,33 +24,43 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
   color: var(--fg);
+  background:
+    radial-gradient(
+      1100px 480px at 50% -8%,
+      rgba(109, 109, 240, 0.1),
+      transparent 70%
+    ),
+    var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 main {
-  max-width: 720px;
+  max-width: 840px;
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 3.25rem 1.5rem 4rem;
 }
 
 h1 {
   margin: 0;
   font-size: 2rem;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .tagline {
   color: var(--muted);
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
 }
 
 .card {
   margin-top: 2rem;
   padding: 1.5rem;
   background: var(--card);
-  border: 1px solid #2a2a3a;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .muted {
@@ -49,12 +68,12 @@ h1 {
 }
 
 .error {
-  color: #ff6b6b;
+  color: var(--danger);
 }
 
 code {
-  background: rgba(91, 91, 214, 0.18);
-  color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   padding: 0.1rem 0.4rem;
   border-radius: 6px;
   font-size: 0.9em;

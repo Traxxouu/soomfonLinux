@@ -47,40 +47,56 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(var(--cols), 1fr);
-    gap: 0.6rem;
+    gap: 0.7rem;
   }
 
   .key {
     aspect-ratio: 1;
-    border: 1px solid #2a2a3a;
-    border-radius: 10px;
-    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
     color: var(--fg);
     font: inherit;
     font-weight: 600;
+    font-size: 0.95rem;
     cursor: pointer;
     display: grid;
     place-items: center;
-    padding: 0.25rem;
+    padding: 0.35rem;
+    /* Inner hairline keeps bright fills legible against the dark frame. */
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     transition:
-      outline-color 0.1s ease,
-      transform 0.05s ease;
-    outline: 2px solid transparent;
-    outline-offset: 2px;
+      box-shadow 0.12s ease,
+      transform 0.08s ease;
   }
 
   .key:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+  }
+
+  .key:active {
+    transform: translateY(0);
   }
 
   .key.selected {
-    outline-color: var(--accent);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 0 0 2px var(--accent),
+      0 0 0 6px var(--accent-soft);
   }
 
   .key.empty {
     border-style: dashed;
+    background: transparent;
+    box-shadow: none;
     color: var(--muted);
     font-weight: 400;
+  }
+
+  .key.empty.selected {
+    box-shadow:
+      0 0 0 2px var(--accent),
+      0 0 0 6px var(--accent-soft);
   }
 
   .label {
@@ -88,9 +104,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   }
 
   .index {
-    opacity: 0.5;
+    opacity: 0.45;
+    font-size: 1.05rem;
   }
 </style>

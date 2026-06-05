@@ -181,26 +181,36 @@
   .field {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    font-size: 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .field > span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
     color: var(--muted);
   }
 
   .hint {
     margin: 0;
     font-size: 0.78rem;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--muted);
   }
 
   input[type="text"],
   select {
-    padding: 0.5rem 0.6rem;
-    border-radius: 8px;
-    border: 1px solid #2a2a3a;
-    background: #14141b;
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
     color: var(--fg);
     font: inherit;
+  }
+
+  input[type="text"]::placeholder {
+    color: color-mix(in srgb, var(--muted) 65%, transparent);
   }
 
   select {
@@ -218,8 +228,8 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #2a2a3a;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
   }
 
   .colors {
@@ -231,21 +241,22 @@
     width: 100%;
     height: 2.4rem;
     padding: 0;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
-    background: #14141b;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
     cursor: pointer;
   }
 
   .clear {
     align-self: flex-start;
     padding: 0.45rem 0.8rem;
-    border-radius: 8px;
-    border: 1px solid #4a2a32;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
     background: transparent;
-    color: #ff8a8a;
+    color: var(--danger);
     font: inherit;
     cursor: pointer;
+    transition: background 0.12s ease;
   }
 
   .clear:disabled {
@@ -254,6 +265,6 @@
   }
 
   .clear:not(:disabled):hover {
-    background: rgba(255, 107, 107, 0.12);
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
   }
 </style>
