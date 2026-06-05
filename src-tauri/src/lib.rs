@@ -10,11 +10,27 @@ async fn get_status() -> soomfon_core::Status {
     soomfon_core::status().await
 }
 
+/// Load the persisted user configuration (profiles, pages, buttons).
+#[tauri::command]
+fn get_config() -> Result<soomfon_core::Config, String> {
+    soomfon_core::config::load_config().map_err(|e| e.to_string())
+}
+
+/// Persist the user configuration sent back by the frontend.
+#[tauri::command]
+fn save_config(config: soomfon_core::Config) -> Result<(), String> {
+    soomfon_core::config::save_config(&config).map_err(|e| e.to_string())
+}
+
 /// Build and run the desktop application.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_status])
+        .invoke_handler(tauri::generate_handler![
+            get_status,
+            get_config,
+            save_config
+        ])
         .run(tauri::generate_context!())
         .expect("error while running the soomfonLinux application");
 }

@@ -82,7 +82,7 @@ Then unplug and replug the device.
 - [x] Project scaffolding (workspace, Tauri + Svelte, CI, packaging skeleton)
 - [x] Device detection via `mirajazz` (read key/encoder input)
 - [x] Render images and text to keys, set brightness
-- [ ] Profiles, pages and button configuration with persistence
+- [x] Profiles, pages and button model with JSON persistence
 - [ ] Visual button-grid editor
 - [ ] Actions: run command / hotkey / open app
 - [ ] OBS integration (scene & slide control)
