@@ -7,9 +7,10 @@
 //!
 //! Persistence is JSON via [`ConfigStore`], which lives under the platform
 //! config directory (on Linux, `~/.config/soomfonlinux/config.json`). The model
-//! is deliberately decoupled from the hardware crate: a button only describes
-//! *what to show* (a label and colours); turning that into pixels is the
-//! device layer's job, and running actions lands in a later branch.
+//! is deliberately decoupled from the hardware crate: a button describes what
+//! to show (a label and colours) and what to do when pressed (an [`Action`]);
+//! turning that into pixels and dispatching the action is the job of the
+//! device session, not this module.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -17,6 +18,8 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+use crate::action::Action;
 
 /// Schema version of the persisted config document. Bumped when the on-disk
 /// shape changes so older files can be recognised.
@@ -27,10 +30,7 @@ const DEFAULT_BG: [u8; 3] = [0x14, 0x14, 0x14];
 /// Default label colour.
 const DEFAULT_FG: [u8; 3] = [0xFF, 0xFF, 0xFF];
 
-/// One configurable key: what it shows on its LCD.
-///
-/// Actions (run a command, send a hotkey…) are intentionally not here yet; they
-/// arrive in a later branch. For now a button is purely visual.
+/// One configurable key: what it shows on its LCD and what it does when pressed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Button {
     /// Text drawn on the key. `None` (or empty) leaves the key a solid fill.
@@ -40,6 +40,10 @@ pub struct Button {
     pub color: [u8; 3],
     /// Label colour, RGB.
     pub text_color: [u8; 3],
+    /// What pressing the key does. Defaults to [`Action::None`], and older
+    /// config files without this field load as such.
+    #[serde(default)]
+    pub action: Action,
 }
 
 impl Default for Button {
@@ -48,6 +52,7 @@ impl Default for Button {
             label: None,
             color: DEFAULT_BG,
             text_color: DEFAULT_FG,
+            action: Action::None,
         }
     }
 }
@@ -158,6 +163,13 @@ impl Config {
     pub fn add_profile(&mut self, name: impl Into<String>) -> usize {
         self.profiles.push(Profile::new(name));
         self.profiles.len() - 1
+    }
+
+    /// The page the device currently shows: the first page of the active
+    /// profile. Returns `None` only for a hand-edited profile with no pages.
+    /// (Page navigation is a later feature; for now the first page is active.)
+    pub fn active_page(&self) -> Option<&Page> {
+        self.active_profile().pages.first()
     }
 }
 
@@ -343,5 +355,18 @@ mod tests {
         let button = cfg.profiles[0].pages[0].button(0).unwrap();
         assert_eq!(button.label, None);
         assert_eq!(button.color, [1, 2, 3]);
+        // A button predating actions loads with no action.
+        assert_eq!(button.action, Action::None);
+    }
+
+    #[test]
+    fn active_page_is_the_active_profiles_first_page() {
+        let mut cfg = Config::default();
+        cfg.add_profile("Streaming");
+        cfg.profiles[1].pages[0].set_button(0, Button::labelled("Live"));
+        cfg.active_profile = 1;
+
+        let page = cfg.active_page().expect("a page exists");
+        assert_eq!(page.button(0).unwrap().label.as_deref(), Some("Live"));
     }
 }

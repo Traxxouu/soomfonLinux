@@ -3,12 +3,17 @@
 //! This crate sits between the hardware layer ([`soomfon_device`]) and the
 //! desktop frontend. It owns the application state that the UI renders and the
 //! actions a key press can trigger. Alongside the live [`status`] snapshot it
-//! owns the persisted user [`config`] — profiles, pages and per-key buttons.
-//! Action dispatch lands in a later branch (`feat/action-*`).
+//! owns the persisted user [`config`] — profiles, pages and per-key buttons —
+//! and the [`session`] runtime that drives a connected deck: drawing the active
+//! page and running each key's [`Action`] when it is pressed.
 
+pub mod action;
 pub mod config;
+pub mod session;
 
+pub use action::{Action, ActionError};
 pub use config::{Button, Config, ConfigError, ConfigStore, Page, Profile};
+pub use session::run_device_session;
 
 use serde::{Deserialize, Serialize};
 
