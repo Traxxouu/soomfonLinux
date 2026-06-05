@@ -29,3 +29,12 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="6602", TAG+="uaccess", MODE="0660"
 
 SUBSYSTEM=="usb", ATTRS{idVendor}=="6603", TAG+="uaccess", MODE="0660"
 KERNEL=="hidraw*", ATTRS{idVendor}=="6603", TAG+="uaccess", MODE="0660"
+
+# Virtual keyboard for "hotkey" key actions.
+#
+# Injecting keystrokes into the focused window (works on X11 and Wayland) needs
+# write access to /dev/uinput. "uaccess" grants it to the logged-in user, same as
+# the device rules above, so no extra group membership is required. uinput is a
+# static node created by the kernel module rather than a hotplugged device, so
+# "static_node=uinput" makes the rule apply at boot without a matching uevent.
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"

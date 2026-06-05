@@ -77,6 +77,13 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 
 Then unplug and replug the device.
 
+The same rule file grants access to `/dev/uinput`, which the **keyboard hotkey**
+action needs to type into the focused window (on both X11 and Wayland). After
+installing and reloading the rule as above, reboot (or `sudo modprobe -r uinput
+&& sudo modprobe uinput`) so the new permissions apply to the uinput node. If
+hotkeys still don't fire, check the app's console for `hotkeys disabled` — that
+means `/dev/uinput` couldn't be opened.
+
 ## Roadmap
 
 - [x] Project scaffolding (workspace, Tauri + Svelte, CI, packaging skeleton)
@@ -85,7 +92,7 @@ Then unplug and replug the device.
 - [x] Profiles, pages and button model with JSON persistence
 - [x] Visual button-grid editor
 - [x] Key actions: run a command (also launches apps and scripts)
-- [ ] Key actions: keyboard hotkey
+- [x] Key actions: keyboard hotkey (inject a shortcut via uinput)
 - [ ] OBS integration (scene & slide control)
 - [ ] Spotify integration (MPRIS / Web API)
 - [ ] Packaging: AppImage / Flatpak / AUR

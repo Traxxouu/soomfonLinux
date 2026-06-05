@@ -13,7 +13,8 @@ export type Rgb = [number, number, number];
  */
 export type Action =
   | { type: "none" }
-  | { type: "run_command"; program: string; args: string[] };
+  | { type: "run_command"; program: string; args: string[] }
+  | { type: "hotkey"; keys: string[] };
 
 export interface Button {
   /** Text drawn on the key. Omitted (undefined) leaves a solid fill. */

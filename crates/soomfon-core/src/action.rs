@@ -13,6 +13,8 @@ use std::process::{Command, Stdio};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::keyboard::{self, Keyboard, KeyboardError};
+
 /// The behaviour bound to a key.
 ///
 /// Serialized with an internal `"type"` tag so the on-disk shape is
@@ -32,6 +34,12 @@ pub enum Action {
         #[serde(default)]
         args: Vec<String>,
     },
+    /// Inject a keyboard shortcut into whatever window has focus.
+    Hotkey {
+        /// The key names making up the combo, e.g. `["ctrl", "shift", "m"]`.
+        /// Matched case-insensitively against the virtual keyboard's table.
+        keys: Vec<String>,
+    },
 }
 
 /// A failure while carrying out an [`Action`].
@@ -45,14 +53,23 @@ pub enum ActionError {
         /// The underlying OS error.
         source: std::io::Error,
     },
+    /// A hotkey was triggered but no virtual keyboard is available — usually the
+    /// session couldn't open `/dev/uinput` at startup (missing permission).
+    #[error("no virtual keyboard available for the hotkey")]
+    NoKeyboard,
+    /// The virtual keyboard rejected or failed to inject the hotkey.
+    #[error(transparent)]
+    Keyboard(#[from] KeyboardError),
 }
 
 impl Action {
     /// Carry out the action.
     ///
     /// Returns as soon as the work is launched; it does not wait for a spawned
-    /// command to finish. [`Action::None`] is always a no-op.
-    pub fn run(&self) -> Result<(), ActionError> {
+    /// command to finish. [`Action::None`] is always a no-op. A [`Action::Hotkey`]
+    /// needs the session's shared `keyboard`; passing `None` makes it fail with
+    /// [`ActionError::NoKeyboard`] rather than silently doing nothing.
+    pub fn run(&self, keyboard: Option<&mut Keyboard>) -> Result<(), ActionError> {
         match self {
             Action::None => Ok(()),
             Action::RunCommand { program, args } => {
@@ -67,6 +84,12 @@ impl Action {
                         source,
                     })?;
                 reap(child);
+                Ok(())
+            }
+            Action::Hotkey { keys } => {
+                let keyboard = keyboard.ok_or(ActionError::NoKeyboard)?;
+                let combo = keyboard::parse_combo(keys)?;
+                keyboard.tap(&combo)?;
                 Ok(())
             }
         }
@@ -87,7 +110,7 @@ mod tests {
     #[test]
     fn none_is_the_default_and_a_noop() {
         assert_eq!(Action::default(), Action::None);
-        assert!(Action::None.run().is_ok());
+        assert!(Action::None.run(None).is_ok());
     }
 
     #[test]
@@ -97,7 +120,7 @@ mod tests {
             program: "true".into(),
             args: vec![],
         };
-        assert!(action.run().is_ok());
+        assert!(action.run(None).is_ok());
     }
 
     #[test]
@@ -106,7 +129,27 @@ mod tests {
             program: "soomfon-no-such-binary-zzz".into(),
             args: vec![],
         };
-        assert!(matches!(action.run(), Err(ActionError::Spawn { .. })));
+        assert!(matches!(action.run(None), Err(ActionError::Spawn { .. })));
+    }
+
+    #[test]
+    fn hotkey_without_a_keyboard_reports_it() {
+        // Opening a real uinput device needs privileges the test runner lacks,
+        // so this only checks the missing-keyboard path.
+        let action = Action::Hotkey {
+            keys: vec!["ctrl".into(), "c".into()],
+        };
+        assert!(matches!(action.run(None), Err(ActionError::NoKeyboard)));
+    }
+
+    #[test]
+    fn hotkey_round_trips_through_json() {
+        let action = Action::Hotkey {
+            keys: vec!["ctrl".into(), "shift".into(), "m".into()],
+        };
+        let json = serde_json::to_string(&action).unwrap();
+        assert_eq!(json, r#"{"type":"hotkey","keys":["ctrl","shift","m"]}"#);
+        assert_eq!(serde_json::from_str::<Action>(&json).unwrap(), action);
     }
 
     #[test]

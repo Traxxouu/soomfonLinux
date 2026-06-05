@@ -17,6 +17,7 @@ thiserror = "2"
 directories = "6"
 tempfile = "3"
 tokio = "1"
+evdev = "0.13"
 soomfon-device = { path = "crates/soomfon-device" }
 soomfon-core = { path = "crates/soomfon-core" }
 

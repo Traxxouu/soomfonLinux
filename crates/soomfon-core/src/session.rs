@@ -10,6 +10,7 @@ use std::time::Duration;
 use soomfon_device::{Deck, DeviceError, InputEvent};
 
 use crate::config::{self, Button};
+use crate::keyboard::Keyboard;
 
 /// How long to wait before retrying after a disconnect or a connection error.
 const RECONNECT_DELAY: Duration = Duration::from_secs(2);
@@ -20,10 +21,22 @@ const RECONNECT_DELAY: Duration = Duration::from_secs(2);
 /// waits [`RECONNECT_DELAY`] and tries again, so plugging the device in (or back
 /// in) is enough to start driving it.
 pub async fn run_device_session() {
+    // Open the virtual keyboard once, up front, and reuse it for the whole
+    // session: registering one per key press would be slow and races the kernel
+    // settling the node. If it can't be opened (no `/dev/uinput` permission),
+    // carry on without hotkey support instead of refusing to start.
+    let mut keyboard = match Keyboard::open() {
+        Ok(keyboard) => Some(keyboard),
+        Err(err) => {
+            eprintln!("soomfon: hotkeys disabled: {err}");
+            None
+        }
+    };
+
     loop {
         match Deck::connect_first().await {
             Ok(Some(deck)) => {
-                if let Err(err) = drive(deck).await {
+                if let Err(err) = drive(deck, keyboard.as_mut()).await {
                     eprintln!("soomfon: device session ended: {err}");
                 }
             }
@@ -35,14 +48,14 @@ pub async fn run_device_session() {
 }
 
 /// Render the active page once, then dispatch key presses until the deck errors.
-async fn drive(deck: Deck) -> Result<(), DeviceError> {
+async fn drive(deck: Deck, mut keyboard: Option<&mut Keyboard>) -> Result<(), DeviceError> {
     render_active_page(&deck).await?;
 
     let reader = deck.reader();
     loop {
         for event in reader.next_events().await? {
             if let InputEvent::KeyDown(key) = event {
-                dispatch(key);
+                dispatch(key, keyboard.as_deref_mut());
             }
         }
     }
@@ -51,13 +64,14 @@ async fn drive(deck: Deck) -> Result<(), DeviceError> {
 /// Look up the freshly-loaded config and run the pressed key's action.
 ///
 /// Config is read from disk on each press so edits saved in the UI take effect
-/// without restarting the session.
-fn dispatch(key: u8) {
+/// without restarting the session. The session's virtual keyboard is passed
+/// through for hotkey actions.
+fn dispatch(key: u8, keyboard: Option<&mut Keyboard>) {
     let config = config::load_config().unwrap_or_default();
     let Some(button) = config.active_page().and_then(|page| page.button(key)) else {
         return;
     };
-    if let Err(err) = button.action.run() {
+    if let Err(err) = button.action.run(keyboard) {
         eprintln!("soomfon: key {} action failed: {err}", key + 1);
     }
 }
